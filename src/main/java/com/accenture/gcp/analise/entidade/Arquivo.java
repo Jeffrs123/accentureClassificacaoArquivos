@@ -15,11 +15,6 @@ public class Arquivo {
 		this.categoria = dado[0];
 		this.tipo = dado[1];
 		this.files = setFiles(dado);
-		//		for (int i = 2; i < dado.length; i++) {
-		//			
-		//			this.files.add(dado[i]);
-		//			setFiles(dado[i]);
-		//		}
 	}
 
 	public String getCategoria() {
@@ -41,12 +36,9 @@ public class Arquivo {
 		this.files = files;
 	}
 	public List<String> setFiles(String[] dado) {
-//		this.files.add(file);
 		for (int i = 2; i < dado.length; i++) {
-
 			this.files.add(dado[i]);
 		}
-		
 		return this.files;
 	}
 

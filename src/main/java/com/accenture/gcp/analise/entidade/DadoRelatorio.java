@@ -63,17 +63,6 @@ public class DadoRelatorio {
 	public void setCaminhosDeOcorrencias(List<String> caminhosDeOcorrencias) {
 		this.caminhosDeOcorrencias = caminhosDeOcorrencias;
 	}
-//	public void setCaminhosDeOcorrencias(String listaDecaminhos) {
-//		
-//		listaDecaminhos.replace("[", "");
-//		listaDecaminhos.replace("]", "");
-//		String[] caminho = listaDecaminhos.split(";");
-//		
-//		for (int i = 0; i < caminho.length; i++) {
-//			this.caminhosDeOcorrencias.add(caminho[i]);
-//		}
-//		
-//	}
 
 	@Override
 	public String toString() {
