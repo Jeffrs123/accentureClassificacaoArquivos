@@ -16,9 +16,10 @@ import com.accenture.gcp.analise.entidade.ArquivoEncontrado;
 
 public class Processamento {
 
-	private static String CAMINHO_FILE_CSV_ANALISAR = "C:\\TEMP\\ANALISE\\Cópia de componentes.csv";
-//	private static String CAMINHO_DIRETORIOS_PARA_ANALISAR =  "C:\\Users\\jefferson.r.a.silva\\OneDrive - Accenture\\Documents\\TESTE";
-	private static String CAMINHO_DIRETORIOS_PARA_ANALISAR =  "C:\\Projeto BVS\\as400code\\MF";
+	private static String DIRETORIO_FILE_ANALISAR = "C:\\TEMP\\ANALISE\\Cópia de componentes.csv";
+//	private static String DIRETORIOS_RAIZ_ESCANEAR =  "C:\\Users\\jefferson.r.a.silva\\OneDrive - Accenture\\Documents\\TESTE";
+	private static String DIRETORIOS_RAIZ_ESCANEAR =  "C:\\Projeto BVS\\as400code\\MF";
+	private static String DIRETORIO_RAIZ_OUT =  "C:\\TEMP";
 	
 	private static List<String> listaRelatorio = new ArrayList<String>();
 	private static List<String> listaArquivos = new ArrayList<String>(); // OK
@@ -26,6 +27,7 @@ public class Processamento {
 	private static List<ArquivoEncontrado> listaArquivosEncontrados = new ArrayList<ArquivoEncontrado>(); // OK
 	private static List<Arquivo> listaArquivosExcel = new ArrayList<Arquivo>();
 
+	
 	public static void comecarProcesso() {
 		zerarListas();
 		checarCaminhoDosDiretorios();
@@ -48,22 +50,19 @@ public class Processamento {
 
 		List<String> paths = new ArrayList<String>();
 
-		paths.add("C:/TEMP");
-		paths.add("C:/TEMP/RELATORIOS");
-		paths.add("C:/TEMP/LOGGER");
+		paths.add(getDIRETORIO_RAIZ_OUT());
+		paths.add(getDIRETORIO_RAIZ_OUT() + "\\RELATORIOS");
+		paths.add(getDIRETORIO_RAIZ_OUT() + "\\LOGGER");
 
 		for (String path : paths) {
-			File file = new File(path);
-			if (!file.exists()) {
-				file.mkdirs();
-				System.out.println("PASTA CRIADA: " + file);
-			}
+			verificarDiretorio(path);
 		}
 	}
+	
 
 	private static void analisarArquivos() {
 		
-		Path directory = Paths.get(CAMINHO_DIRETORIOS_PARA_ANALISAR);
+		Path directory = Paths.get(getDIRETORIOS_RAIZ());
 
 		try {
 
@@ -109,14 +108,14 @@ public class Processamento {
 	
 	private static void efetuarCopia(String categoriaArquivo, String tipoArquivo, String caminhoOrigemArquivo ,String nomeArquivo) {
 		
-		File caminho = new File("C:/TEMP/RELATORIOS/" + categoriaArquivo);
-		File subCaminho = new File("C:/TEMP/RELATORIOS/" + categoriaArquivo + "/" + tipoArquivo);
+		File caminho = new File(getDIRETORIO_RAIZ_OUT() + "\\RELATORIOS\\" + categoriaArquivo);
+		File subCaminho = new File(getDIRETORIO_RAIZ_OUT() + "\\RELATORIOS\\" + categoriaArquivo + "\\" + tipoArquivo);
 		
 		if (!caminho.exists()) caminho.mkdirs();		
 		if (!subCaminho.exists()) subCaminho.mkdirs();
 		
 		try {
-			Files.copy(Paths.get(caminhoOrigemArquivo), Paths.get(subCaminho + "/" + nomeArquivo), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(Paths.get(caminhoOrigemArquivo), Paths.get(subCaminho + "\\" + nomeArquivo), StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -128,7 +127,7 @@ public class Processamento {
 	
 	private static void lerArquivoExcel() {
 		try {
-			List<String> listFileData = Files.readAllLines(Path.of(CAMINHO_FILE_CSV_ANALISAR));
+			List<String> listFileData = Files.readAllLines(Path.of(getDIRETORIO_FILE_ANALISAR()));
 
 			for (String linha : listFileData) {
 				Arquivo aq = new Arquivo(linha);
@@ -136,6 +135,49 @@ public class Processamento {
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+	}
+
+	private static void verificarDiretorio(String path) {
+		File file = new File(path);
+		if (!file.exists()) {
+			file.mkdirs();
+			System.out.println("Diretório/Arquivo	'" + file.toString().toUpperCase() + "'	criado com sucesso");
+		}
+	}
+	
+	// GETTERS && SETTERS
+	
+	public static String getDIRETORIO_FILE_ANALISAR() {
+		return DIRETORIO_FILE_ANALISAR;
+	}
+
+	public static void setDIRETORIO_FILE_ANALISAR(String diretorio) {
+		if (!diretorio.equals(getDIRETORIO_FILE_ANALISAR()) && diretorio.length() > 0) {
+			DIRETORIO_FILE_ANALISAR = diretorio;
+			verificarDiretorio(diretorio);
+		}
+	}
+
+	public static String getDIRETORIOS_RAIZ() {
+		return DIRETORIOS_RAIZ_ESCANEAR;
+	}
+
+	public static void setDIRETORIOS_RAIZ(String diretorio) {
+		if (!diretorio.equals(getDIRETORIOS_RAIZ()) && diretorio.length() > 0 && !(diretorio == null)) {
+			DIRETORIOS_RAIZ_ESCANEAR = diretorio;
+			verificarDiretorio(diretorio);
+		}
+	}
+
+	public static String getDIRETORIO_RAIZ_OUT() {
+		return DIRETORIO_RAIZ_OUT;
+	}
+
+	public static void setDIRETORIO_RAIZ_OUT(String diretorio) {
+		if (!diretorio.equals(getDIRETORIO_RAIZ_OUT()) && diretorio.length() > 0) {
+			DIRETORIO_RAIZ_OUT = diretorio;
+			verificarDiretorio(diretorio);
 		}
 	}
 	
