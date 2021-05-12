@@ -20,6 +20,9 @@ target/
 *.ipr
 
 ### NetBeans ###
+/bin
+/ContagemLinhasN
+/logs
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -31,6 +34,3 @@ build/
 
 ### VS Code ###
 .vscode/
-
-.bin
-.ContagemLinhasN
