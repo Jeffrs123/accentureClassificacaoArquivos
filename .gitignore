@@ -34,3 +34,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.DS_Store
+.commons-lang3-3.1
+.mvnw.cmd
+.mvnw
