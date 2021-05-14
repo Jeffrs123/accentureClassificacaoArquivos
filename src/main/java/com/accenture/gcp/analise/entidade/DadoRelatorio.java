@@ -70,5 +70,4 @@ public class DadoRelatorio {
 				+ ocorrencias + ", caminhosDeOcorrencias=" + caminhosDeOcorrencias + "]";
 	}
 	
-	
 }

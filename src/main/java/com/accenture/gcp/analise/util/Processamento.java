@@ -1,20 +1,30 @@
 package com.accenture.gcp.analise.util;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.accenture.gcp.analise.entidade.Arquivo;
 import com.accenture.gcp.analise.entidade.ArquivoEncontrado;
 import com.accenture.gcp.analise.menu.TemplateStatus;
+import com.accenture.gcp.analise.util.StringUtil;
 
 public class Processamento {
 
@@ -28,16 +38,22 @@ public class Processamento {
 	private static List<String> listaLoggers = new ArrayList<String>();
 	private static List<ArquivoEncontrado> listaArquivosEncontrados = new ArrayList<ArquivoEncontrado>(); // OK
 	private static List<String> listaArquivosLogger = new ArrayList<String>(); // OK
-	private static List<Arquivo> listaArquivosCSV = new ArrayList<Arquivo>();
+	private static List<Arquivo> listaLinhasArquivoCSV = new ArrayList<Arquivo>();
+	private static List<String> testeConstaLinhas = new ArrayList<String>();
+	private static int val = 0;
 
 	public static boolean iniciarProcesso() {
 		try {
+			TemplateStatus.setTextField("Processando ... !");
 			zerarListas();
 			checarCaminhoDosDiretorios();
+			cabecalhoDetalhesArquivos();
 			analisarArquivos();
 			lerArquivoCSV();
 			moverListaArquivoExcel();
+			verificarLoggerReport();
 			gerarRelatorioLogger();
+			gerarRelatorioDetalhesArquivos();
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -50,7 +66,9 @@ public class Processamento {
 		listaLoggers.clear();
 		listaArquivosLogger.clear();
 		listaArquivosEncontrados.clear();
-		listaArquivosCSV.clear();
+		listaLinhasArquivoCSV.clear();
+		testeConstaLinhas.clear();
+		val = 0;
 	}
 
 	/**
@@ -87,7 +105,7 @@ public class Processamento {
 		try {
 
 			List<Path> directories = Files.walk(directory).collect(Collectors.toList());
-
+			
 			for (Path path : directories) {
 				File file = new File(path.toString());
 				if (
@@ -114,6 +132,174 @@ public class Processamento {
 		listaArquivos.add(file.getName());
 	}
 
+	private static void cabecalhoDetalhesArquivos() {
+		testeConstaLinhas.add( "arquivo_fonte;"
+				+ "num_linhas;"
+				+ "comentarios_faturaveis;"
+				+ "comentarios_nao_faturaveis;"
+				+ "linhas_branco;"
+				+ "caminho"
+		);
+	}
+
+	private static BufferedWriter writer;
+	private static BufferedWriter writerComentariosFaturaveis;
+
+	private static void countLines(String path) throws IOException {
+		File fp = new File(path);
+		countLines(fp);
+	}
+	
+	private static void countLines(File inputFile) throws IOException {
+		try {
+
+			if (inputFile.isFile()) {
+
+				StringBuffer comentariosFaturaveis = new StringBuffer();
+
+				BufferedReader reader;
+
+				try {
+					reader = new BufferedReader(new FileReader(inputFile));
+					
+					System.out.println("inputFile" + inputFile);
+					System.out.println("inputFile.getAbsolutePath()" + inputFile.getAbsolutePath());
+
+					int intLines = 0; // número da linha
+					int intComentFaturavel = 0;
+					int intComentNaoFaturavel = 0;
+					int intBlankLines = 0; // quantidade de linhas em branco
+
+					int intRowLen = 0;
+					int intLineBegin = 0;
+
+					String strCurrentLine;
+					String strUtilLine;
+					String strCol7;
+					String strComentChar;
+
+					while ((strCurrentLine = reader.readLine()) != null) {
+
+						intLines++;
+
+						if (strCurrentLine.trim().equals("")) {
+							intBlankLines++;
+						} else {
+							if (strCurrentLine.trim().length() < 7) {
+								intBlankLines++;
+							} else {
+
+								if (!StringUtils.isNumeric(strCurrentLine.substring(0, 6))) {
+									intLineBegin = 1;
+									strCol7 = strCurrentLine.trim().substring(0, 1);
+									strComentChar = "%";
+								} else {
+									intLineBegin = 7;
+									strCol7 = strCurrentLine.trim().substring(6, 7);
+									strComentChar = "*";
+								}
+
+								intRowLen = strCurrentLine.trim().length();
+
+								if (strCurrentLine.length() < 72) {
+									intRowLen = strCurrentLine.length();
+								} else {
+									intRowLen = 72;
+								}
+
+								if (strCurrentLine.substring(intLineBegin, intRowLen).trim().equals("")) {
+									intBlankLines++;
+								} else {
+
+									strUtilLine = strCurrentLine.substring(intLineBegin, intRowLen).trim();
+
+									// if (
+									// strUtilLine.trim().contains(EXCL_PATTERN1)
+									// ||
+									// strUtilLine.trim().contains(EXCL_PATTERN2)
+									// ||
+									// strUtilLine.trim().contains(EXCL_PATTERN3)
+									// ||
+									// strUtilLine.trim().contains(EXCL_PATTERN4))
+									// {
+									// intComentNaoFaturavel++;
+									//
+									// }else{
+									//
+									// if (strCol7.equals(strComentChar)){
+									// if (intLineBegin==1){
+									//
+									// if
+									// (strCurrentLine.substring(strCurrentLine.indexOf(strComentChar)+1,
+									// intRowLen).trim().equals("")) {
+									// intBlankLines++;
+									// }else{
+									// comentariosFaturaveis.append(strCurrentLine).append("\n");
+									// intComentFaturavel++;
+									// }
+									// }else{
+									// comentariosFaturaveis.append(strCurrentLine).append("\n");
+									// intComentFaturavel++;
+									// }
+									// }
+									// }
+
+									/**
+									 * strCol7 = Primeira Coluna util (1 ou 7)
+									 * de uma linha strComentChar = "*" ou "%"
+									 */
+									if (strCol7.equals(strComentChar)) {
+
+										//	boolean b1 = verificaComentarioUtil(strUtilLine);
+										//	boolean b2 = StringUtil.isFaturavel(strCurrentLine.substring(7));
+										if (verificaComentarioUtil(strUtilLine)) {
+											intComentFaturavel++;
+										} else {
+											System.out.println(strCurrentLine.substring(0, 70));
+											intComentNaoFaturavel++;
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					
+					testeConstaLinhas.add(
+							inputFile.getName() 
+							+ ";" + intLines
+							+ ";" + intComentFaturavel
+							+ ";" + intComentNaoFaturavel 
+							+ ";" + intBlankLines
+							+ ";" + inputFile.getPath())
+					;
+					
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	private static boolean verificaComentarioUtil(String linhaUtil) {
+		// Remover caracteres duplicados
+		// banana fica ban
+		// +=============+ fica +=
+
+		// Quantidade de caracteres restante > 5
+		// true
+		// caso contrario
+		// false
+
+		String stringSimplificada = StringUtil.removeCharacteresDuplicados(linhaUtil);
+		return stringSimplificada.length() > 5;
+	}
+
 	/**
 	 * Escanear o arquivo que será a base para analisar e separar arquivos encontrados na pasta para analisar.
 	 * Cada linha é quebrada pelo separador ";"
@@ -127,7 +313,7 @@ public class Processamento {
 
 			for (String linha : listFileData) {
 				Arquivo aq = new Arquivo(linha);
-				listaArquivosCSV.add(aq);
+				listaLinhasArquivoCSV.add(aq);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -136,7 +322,7 @@ public class Processamento {
 
 
 	private static void moverListaArquivoExcel() {
-		listaArquivosCSV.stream().forEach( l -> compararArquivosExcelESalvos(l) );
+		listaLinhasArquivoCSV.stream().forEach( l -> compararArquivosExcelESalvos(l) );
 	}
 
 	/**
@@ -148,19 +334,38 @@ public class Processamento {
 	 * @param arq Arquivo para comparar.
 	 */
 	private static void compararArquivosExcelESalvos(Arquivo arq) {
+		val += arq.getFiles().size();
 		arq.getFiles().stream().forEach(l -> {
 			listaArquivosEncontrados.stream()
 			.forEach(
 					l2-> {
-						if (l.equals(l2.getNomeArquivo())) {
-							efetuarCopia(arq.getCategoria(), arq.getTipo(), l2.getCaminhoArquivo(), l2.getNomeArquivo());			
-						} else if(!listaArquivosLogger.contains(l)) {
-							listaArquivosLogger.add(l);
-
+						//	if(l2.getNomeArquivo().startsWith(l))
+						if(l2.getNomeArquivo().equals(l)) {
+							efetuarCopia(arq.getCategoria(), arq.getTipo(), l2.getCaminhoArquivo(), l2.getNomeArquivo());
+							try {
+//								cabecalhoDetalhesArquivos();
+								countLines(l2.getCaminhoArquivo());
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
 						}
+						// adicionar o arquivo em questão na lista de logger
+						else if (!listaArquivosLogger.contains(l) )
+							listaArquivosLogger.add(l);
 					});
 		});
 	}
+
+	/**
+	 * Excluir arquivos já separados, da lista de logger.
+	 */
+	private static void verificarLoggerReport() {
+		listaArquivosEncontrados.stream().forEach(l -> {
+			if (listaArquivosLogger.contains(l.getNomeArquivo())) listaArquivosLogger.remove(l.getNomeArquivo());
+		});
+	}
+
 
 	private static void efetuarCopia(String categoriaArquivo, String tipoArquivo, String caminhoOrigemArquivo ,String nomeArquivo) {
 
@@ -178,16 +383,34 @@ public class Processamento {
 	}
 
 
+	private static void gerarRelatorioDetalhesArquivos() {
+		String caminho = getDIRETORIO_RAIZ_OUT() + "\\LOGGER\\detalhes_arquivos_" + LocalDate.now() + ".csv";
+
+		try {
+			Files.write(Path.of(caminho), testeConstaLinhas);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	private static void gerarRelatorioLogger() {
 
 
 
 		try {
 			if (!listaArquivosLogger.isEmpty()) {
-				LocalDate date = LocalDate.now();
-				String caminho = getDIRETORIO_RAIZ_OUT() + "\\LOGGER\\" + date + ".csv";
-				listaLoggers.add("Data: " + date);
-				listaLoggers.add("Arquivos não encontrados: " + listaArquivosLogger.size());
+				int v = val - listaArquivosEncontrados.size();
+
+				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+				Date date = new Date();
+				String caminho = getDIRETORIO_RAIZ_OUT() + "\\LOGGER\\Relatorio_Logger_" + LocalDate.now() + ".csv";
+
+				// Cabeçalho - Relatório Logger
+				listaLoggers.add("Data: " + dateFormat.format(date));
+				listaLoggers.add("Arquivos encontrados: " + listaArquivosEncontrados.size()  + "/" + val);
+				listaLoggers.add("Arquivos não encontrados: " + v  + "/" + val);
+
+				// Adicionar arquivos não encontrados ao Relatório de Logger
 				listaArquivosLogger.stream().forEach(l -> listaLoggers.add(l));
 				Files.write(Path.of(caminho), listaLoggers);
 

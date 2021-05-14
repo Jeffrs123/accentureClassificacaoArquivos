@@ -5,6 +5,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -70,7 +74,11 @@ public class TemplateStatus extends JPanel implements ActionListener {
 		if(e.getSource() == primeiroS){
 			setTextField("Processando");
 			if (Processamento.iniciarProcesso()) {
-				setTextField("Arquivos processados com SUCESSO! \\o/\\O/\\o/");
+				
+				DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+				Date date = new Date();
+				
+				setTextField("Arquivos processados com SUCESSO! \\o/\\O/\\o/ " + dateFormat.format(date));
 			}
 		}
 	}
